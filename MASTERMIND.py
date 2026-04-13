@@ -39,12 +39,12 @@ while game_running:
 
     display_intro(code_length, max_attempts, time_limit)
 
-    print(code)
-
     timed_out = False
     first_guess = True
     correct_position = 0
     attempts = 0
+    quit_game = False  # new dedicated quit flag
+    cheated = False
 
     while correct_position != code_length and attempts < max_attempts:
 
@@ -52,21 +52,22 @@ while game_running:
 
         if guess == "quit":
             print("WE DON'T LIKE QUITTERS!")
+            quit_game = True   # signal to skip play_again
             game_running = False
             break
 
         if guess == "iwannawin":
             print(f"{code} is the answer ya dirty cheater! Enjoy the loss! 💀  ")
-            game_running = False
+            cheated = True
             break
+
+        if len(guess) != code_length or not guess.isdigit():
+            print("Invalid code, try again.")
+            continue
 
         if first_guess:
             start_time = time.time()
             first_guess = False
-
-        if len(guess) != code_length or not guess.isdigit(): #validates input length and type
-            print("Invalid code, try again.")
-            continue
 
         elapsed = time.time() - start_time
 
@@ -74,7 +75,7 @@ while game_running:
             timed_out = True
             break
 
-        guess_list = [int(digit) for digit in guess] #converts guess to a list
+        guess_list = [int(digit) for digit in guess]
 
         correct_position = 0
 
@@ -83,17 +84,15 @@ while game_running:
                 correct_position += 1
 
         code_copy = code[:]
-        #removes already correctly placed digits from code_copy
         for i in range(code_length):
             if guess_list[i] == code[i]:
                 code_copy.remove(int(guess_list[i]))
 
         correct_digit = 0
-        #checks remaining digits against what's left in code_copy
         for i in range(code_length):
             if guess_list[i] in code_copy and guess_list[i] != code[i]:
                 correct_digit += 1
-                code_copy.remove(guess_list[i]) #matches removed as to not be counted twice
+                code_copy.remove(guess_list[i])
 
         if correct_position != code_length:
             print("Correct positions:", correct_position)
@@ -101,21 +100,28 @@ while game_running:
             attempts += 1
             print(f"You have {max_attempts - attempts} attempts remaining!")
 
-    if timed_out:
-        print("Time's up!")
+    if quit_game:  # skip everything below if user quit
+        break
 
-    elif attempts >= max_attempts:
-        print("You ran out of tries, game over!")
+    if not cheated:
+        if timed_out:
+            print("Time's up!")
 
-    elif correct_position == code_length:
-        print("YOU CRACKED THE CODE! 🎉")
+        elif attempts >= max_attempts:
+            print("You ran out of tries, game over!")
+
+        elif correct_position == code_length:
+            print("YOU CRACKED THE CODE! 🎉")
 
     play_again = input("Play again? (yes/no): ")
 
-    if play_again == "no":
+    if play_again == "yes":
+        continue  # explicitly restart the outer loop
+
+    elif play_again == "no":
         print("Thanks for playing!")
         break
 
-    if play_again != "yes" and play_again != "no":
+    else:
         print("I'll take that as a no, thanks for playing!")
         break
